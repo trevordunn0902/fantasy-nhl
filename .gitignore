@@ -1,0 +1,19 @@
+# Node.js (frontend)
+client/node_modules/
+client/build/
+client/.env
+client/package-lock.json
+
+# Java / Maven (backend)
+server/target/
+server/.classpath
+server/.project
+server/.settings/
+server/.mvn/
+server/.idea/
+server/*.iml
+server/.env
+server/.DS_Store
+
+# General
+.DS_Store
