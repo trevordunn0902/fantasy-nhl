@@ -1,55 +1,90 @@
 package com.fantasynhl.server.league;
 
-import com.fantasynhl.server.user.Role;
 import com.fantasynhl.server.user.User;
-
-import java.util.List;
-
+import com.fantasynhl.server.user.UserRepository;
+import com.fantasynhl.server.league.dto.LeagueDTO;
+import com.fantasynhl.server.league.dto.TeamDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/league")
 public class LeagueController {
 
     private final LeagueService leagueService;
+    private final UserRepository userRepository;
+    private final DraftService draftService;
 
-    public LeagueController(LeagueService leagueService) {
+    public LeagueController(LeagueService leagueService, UserRepository userRepository, DraftService draftService) {
         this.leagueService = leagueService;
+        this.userRepository = userRepository;
+        this.draftService = draftService;
     }
 
+    // Create a new league
     @PostMapping("/create")
-    public ResponseEntity<League> createLeague(@RequestParam String name) {
+    public ResponseEntity<LeagueDTO> createLeague(@RequestParam String name) {
         League league = leagueService.createLeague(name);
-        return ResponseEntity.ok(league);
+        return ResponseEntity.ok(new LeagueDTO(league));
     }
 
+    // Join a league
     @PostMapping("/join")
-    public ResponseEntity<Team> joinLeague(
+    public ResponseEntity<TeamDTO> joinLeague(
             @RequestParam String inviteCode,
-            @RequestParam String teamName
+            @RequestParam String teamName,
+            @RequestParam Long userId
     ) {
-        // Temporary test user
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("test@example.com");
-        user.setRole(Role.USER);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Team team = leagueService.joinLeague(inviteCode, user, teamName);
-        return ResponseEntity.ok(team);
+        return ResponseEntity.ok(new TeamDTO(team));
     }
 
-    // Optional: get league info by invite code
+    // Start the draft
+    @PostMapping("/draft/start")
+    public ResponseEntity<String> startDraft(@RequestParam Long leagueId) {
+        draftService.startDraft(leagueId);
+        return ResponseEntity.ok("Draft started successfully");
+    }
+
+    // Make a draft pick
+    @PostMapping("/draft/pick")
+    public ResponseEntity<String> makePick(
+            @RequestParam Long leagueId,
+            @RequestParam Long teamId,
+            @RequestParam Long playerId
+    ) {
+        draftService.draftPlayer(leagueId, teamId, playerId);
+        return ResponseEntity.ok("Pick made successfully");
+    }
+
+    // Get draft status
+    @GetMapping("/draft/status")
+    public ResponseEntity<Map<String, Object>> getDraftStatus(@RequestParam Long leagueId) {
+        return ResponseEntity.ok(draftService.getLeagueDraftStatus(leagueId));
+    }
+
+    // Get league info by invite code
     @GetMapping
-    public ResponseEntity<League> getLeague(@RequestParam String inviteCode) {
+    public ResponseEntity<LeagueDTO> getLeague(@RequestParam String inviteCode) {
         return leagueService.getLeague(inviteCode)
+                .map(LeagueDTO::new)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // New endpoint: fetch all leagues
+    // Fetch all leagues
     @GetMapping("/all")
-    public ResponseEntity<List<League>> getAllLeagues() {
-        return ResponseEntity.ok(leagueService.getAllLeagues());
+    public ResponseEntity<List<LeagueDTO>> getAllLeagues() {
+        List<LeagueDTO> leagues = leagueService.getAllLeagues()
+                .stream()
+                .map(LeagueDTO::new)
+                .toList();
+        return ResponseEntity.ok(leagues);
     }
 }

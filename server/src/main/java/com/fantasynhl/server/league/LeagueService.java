@@ -11,26 +11,23 @@ import java.util.UUID;
 public class LeagueService {
 
     private final LeagueRepository leagueRepository;
+    private final TeamRepository teamRepository;
 
-    public LeagueService(LeagueRepository leagueRepository) {
+    public LeagueService(LeagueRepository leagueRepository, TeamRepository teamRepository) {
         this.leagueRepository = leagueRepository;
+        this.teamRepository = teamRepository;
     }
 
-    // Create a new league (admin only)
+    // Create a new league
     public League createLeague(String name) {
         League league = new League();
         league.setName(name);
         league.setInviteCode(generateInviteCode());
-        league.setMaxTeams(10); // fixed cap
+        league.setMaxTeams(10);
         return leagueRepository.save(league);
     }
 
-    public List<League> getAllLeagues() {
-    return leagueRepository.findAll();
-    }
-
-
-    // User joins a league via invite code
+    // User joins a league
     public Team joinLeague(String inviteCode, User user, String teamName) {
         League league = leagueRepository.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new RuntimeException("League not found"));
@@ -42,17 +39,28 @@ public class LeagueService {
         Team team = new Team();
         team.setName(teamName);
         team.setOwner(user);
+        team.setLeague(league);
 
-        league.getTeams().add(team);
-        return team;
+        Team saved = teamRepository.save(team);
+
+        // Add team to league's list and persist
+        league.getTeams().add(saved);
+        leagueRepository.save(league);
+
+        return saved;
     }
 
-    // Optional: fetch league info
+    // Fetch league by invite code
     public Optional<League> getLeague(String inviteCode) {
         return leagueRepository.findByInviteCode(inviteCode);
     }
 
-    // Generate a random 6-character invite code
+    // Fetch all leagues
+    public List<League> getAllLeagues() {
+        return leagueRepository.findAll();
+    }
+
+    // Generate a 6-character invite code
     private String generateInviteCode() {
         return UUID.randomUUID().toString().substring(0, 6).toUpperCase();
     }

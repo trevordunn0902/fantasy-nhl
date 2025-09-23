@@ -13,14 +13,14 @@ public class AuthController {
         this.authService = authService;
     }
 
-    // Endpoint to register a new user
+    // Register a new user
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestParam String email, @RequestParam String password) {
         User user = authService.register(email, password);
         return ResponseEntity.ok(user);
     }
 
-    // Endpoint to login an existing user
+    // Login existing user
     @PostMapping("/login")
     public ResponseEntity<User> login(@RequestParam String email, @RequestParam String password) {
         User user = authService.login(email, password);

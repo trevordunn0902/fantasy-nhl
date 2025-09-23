@@ -1,7 +1,6 @@
 package com.fantasynhl.server.user;
 
 import org.springframework.stereotype.Service;
-
 import java.util.Optional;
 
 @Service
