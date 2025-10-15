@@ -4,16 +4,18 @@ public class DraftPickDTO {
     private Long playerId;
     private String playerName;
     private String position;
+    private String positionCode; // NEW FIELD
     private Long teamId;
     private String teamName;
     private int pickOrder;
 
     public DraftPickDTO() {}
 
-    public DraftPickDTO(Long playerId, String playerName, String position, Long teamId, String teamName, int pickOrder) {
+    public DraftPickDTO(Long playerId, String playerName, String position, String positionCode, Long teamId, String teamName, int pickOrder) {
         this.playerId = playerId;
         this.playerName = playerName;
         this.position = position;
+        this.positionCode = positionCode;
         this.teamId = teamId;
         this.teamName = teamName;
         this.pickOrder = pickOrder;
@@ -28,6 +30,9 @@ public class DraftPickDTO {
 
     public String getPosition() { return position; }
     public void setPosition(String position) { this.position = position; }
+
+    public String getPositionCode() { return positionCode; }
+    public void setPositionCode(String positionCode) { this.positionCode = positionCode; }
 
     public Long getTeamId() { return teamId; }
     public void setTeamId(Long teamId) { this.teamId = teamId; }

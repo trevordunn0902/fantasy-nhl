@@ -19,6 +19,9 @@ public class Team {
 
     private String name;
 
+    @Column(name = "total_points")
+    private double totalPoints = 0.0;
+
     // Owner relationship
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
@@ -31,19 +34,28 @@ public class Team {
     @JsonBackReference
     private League league;
 
-    // Roster of players (many-to-many)
-    @ManyToMany
-    @JoinTable(
-        name = "team_players",
-        joinColumns = @JoinColumn(name = "team_id"),
-        inverseJoinColumns = @JoinColumn(name = "player_id")
-    )
+    // New: one-to-many relationship with TeamPlayer entity
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<Player> roster = new ArrayList<>();
+    private List<TeamPlayer> teamPlayers = new ArrayList<>();
 
     public Team() {}
 
-    // Getters / setters
+    // Helper to add a player to the team
+    public void addPlayer(Player player) {
+        TeamPlayer teamPlayer = new TeamPlayer();
+        teamPlayer.setTeam(this);
+        teamPlayer.setPlayer(player);
+        teamPlayer.setCaptainRole("NONE");
+        teamPlayers.add(teamPlayer);
+    }
+
+    // Helper to remove a player
+    public void removePlayer(Player player) {
+        teamPlayers.removeIf(tp -> tp.getPlayer().equals(player));
+    }
+
+    // Getters / Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -56,6 +68,9 @@ public class Team {
     public League getLeague() { return league; }
     public void setLeague(League league) { this.league = league; }
 
-    public List<Player> getRoster() { return roster; }
-    public void setRoster(List<Player> roster) { this.roster = roster; }
+    public List<TeamPlayer> getTeamPlayers() { return teamPlayers; }
+    public void setTeamPlayers(List<TeamPlayer> teamPlayers) { this.teamPlayers = teamPlayers; }
+
+    public double getTotalPoints() { return totalPoints; }
+    public void setTotalPoints(double totalPoints) { this.totalPoints = totalPoints; }
 }

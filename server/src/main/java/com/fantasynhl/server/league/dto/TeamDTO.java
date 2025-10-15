@@ -1,6 +1,7 @@
 package com.fantasynhl.server.league.dto;
 
 import com.fantasynhl.server.league.Team;
+import com.fantasynhl.server.league.TeamPlayer;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,9 +26,11 @@ public class TeamDTO {
             this.league = new LeagueDTO(team.getLeague(), false);
         }
 
-        this.roster = team.getRoster().stream()
-                          .map(PlayerDTO::new)
-                          .collect(Collectors.toList());
+        // map TeamPlayer -> PlayerDTO
+        this.roster = team.getTeamPlayers().stream()
+                .map(TeamPlayer::getPlayer)
+                .map(PlayerDTO::new)
+                .collect(Collectors.toList());
     }
 
     // Getters

@@ -7,12 +7,14 @@ public class PlayerDTO {
     private String name;
     private String position;
     private String nhlTeam;
+    private String positionCode;
 
     public PlayerDTO(Player player) {
         this.id = player.getId();
         this.name = player.getName();
         this.position = player.getPosition();
         this.nhlTeam = player.getNhlTeam();
+        this.positionCode = player.getPositionCode();
     }
 
     // Getters
@@ -20,4 +22,5 @@ public class PlayerDTO {
     public String getName() { return name; }
     public String getPosition() { return position; }
     public String getNhlTeam() { return nhlTeam; }
+    public String getPositionCode() { return positionCode; }
 }
