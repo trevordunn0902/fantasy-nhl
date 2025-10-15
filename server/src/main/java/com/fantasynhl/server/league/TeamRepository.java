@@ -1,9 +1,10 @@
 package com.fantasynhl.server.league;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.List;
 
-@Repository
+import org.springframework.data.jpa.repository.JpaRepository;
+
 public interface TeamRepository extends JpaRepository<Team, Long> {
-    // Basic CRUD operations are sufficient for v2
+
+    List<Team> findByOwnerId(Long ownerId);
 }

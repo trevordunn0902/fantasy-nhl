@@ -14,8 +14,20 @@ const Home = () => {
     const fetchLeagues = async () => {
       try {
         const res = await getAllLeagues();
-        setLeagues(res);
-      } catch {
+
+        console.log("API response for leagues:", res); // <-- Log API response
+
+        // Check if response is an array or wrapped in an object
+        if (Array.isArray(res)) {
+          setLeagues(res);
+        } else if (res && Array.isArray(res.leagues)) {
+          setLeagues(res.leagues);
+        } else {
+          setLeagues([]);
+          console.warn("Unexpected API response format:", res);
+        }
+      } catch (err) {
+        console.error("Error fetching leagues:", err);
         setError("Failed to fetch leagues");
       }
     };

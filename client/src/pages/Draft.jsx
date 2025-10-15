@@ -1,10 +1,9 @@
-// src/pages/Draft.jsx
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { getDraftStatus, getTeamRoster, getAvailablePlayers, draftPlayer } from "../api/api";
+import { getDraftStatus, getAvailablePlayers, draftPlayer } from "../api/api";
 import DraftBoard from "../components/DraftBoard";
-import PlayerCard from "../components/PlayerCard";
+import RosterSidebar from "../components/RosterSidebar";
 import "../styles/pages.css";
 
 const Draft = () => {
@@ -12,7 +11,6 @@ const Draft = () => {
   const { leagueId } = useParams();
 
   const [draftStatus, setDraftStatus] = useState(null);
-  const [teamRoster, setTeamRoster] = useState([]);
   const [availablePlayers, setAvailablePlayers] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -21,16 +19,6 @@ const Draft = () => {
     try {
       const status = await getDraftStatus(leagueId);
       setDraftStatus(status);
-
-      if (user && Array.isArray(status.teams)) {
-        const myTeam = status.teams.find((t) => t.owner?.id === user.id);
-        if (myTeam) {
-          const roster = await getTeamRoster(leagueId, myTeam.id);
-          setTeamRoster(roster);
-        } else {
-          setTeamRoster([]);
-        }
-      }
     } catch (err) {
       console.error("Error fetching draft status:", err);
       setError("Failed to fetch draft status. Make sure you are part of this league.");
@@ -54,14 +42,12 @@ const Draft = () => {
       if (!myTeam) return;
 
       await draftPlayer(leagueId, myTeam.id, playerId);
-
       await Promise.all([fetchDraftStatus(), fetchAvailablePlayersList()]);
       setError("");
     } catch (err) {
       console.error("Draft error:", err);
       const message =
-        err.message ||
-        "Failed to make draft pick. Please ensure you haven't exceeded position limits.";
+        err.message || "Failed to make draft pick. Please ensure you haven't exceeded position limits.";
       setError(message);
       alert(message);
     }
@@ -69,7 +55,6 @@ const Draft = () => {
 
   useEffect(() => {
     if (!leagueId) return;
-
     setLoading(true);
     Promise.all([fetchDraftStatus(), fetchAvailablePlayersList()]).finally(() =>
       setLoading(false)
@@ -80,7 +65,8 @@ const Draft = () => {
   }, [leagueId]);
 
   if (loading) return <p className="draft-loading">Loading draft...</p>;
-  if (!draftStatus || !Array.isArray(draftStatus.teams)) return <p className="draft-loading">Loading teams...</p>;
+  if (!draftStatus || !Array.isArray(draftStatus.teams))
+    return <p className="draft-loading">Loading teams...</p>;
 
   const myTeam = draftStatus.teams.find((t) => t.owner?.id === user.id);
   const myTeamId = myTeam?.id || null;
@@ -89,27 +75,22 @@ const Draft = () => {
     <div className="draft-page">
       <h1 className="page-title mb-4">Draft Board</h1>
 
-      {/* Draft Board Component */}
-      <DraftBoard
-        leagueId={leagueId}
-        draftStatus={draftStatus}
-        onDraftPick={handleDraftPick}
-        userTeamId={myTeamId}
-      />
+      <div className="draft-layout">
+        {/* Left side: Draft Board */}
+        <div className="draft-board-section">
+          <DraftBoard
+            draftStatus={draftStatus}
+            onDraftPick={handleDraftPick}
+            userTeamId={myTeamId}
+            availablePlayers={availablePlayers}
+          />
+        </div>
 
-      {/* User Team Roster */}
-      <h2 className="section-title mt-6 mb-2">My Team Roster</h2>
-      <div className="draft-grid">
-        {teamRoster.length > 0 ? (
-          teamRoster.map((player) => (
-            <PlayerCard key={player.playerId} player={player} />
-          ))
-        ) : (
-          <p className="text-gray-500">No players drafted yet.</p>
-        )}
+        {/* Right side: Roster Sidebar */}
+        {myTeamId && <RosterSidebar teamId={myTeamId} />}
       </div>
 
-      {/* League Teams */}
+      {/* League Teams (moved below main layout) */}
       <h2 className="section-title mt-6 mb-2">League Teams</h2>
       <div className="card-grid">
         {draftStatus.teams.map((team) => (

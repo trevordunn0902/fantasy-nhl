@@ -24,6 +24,7 @@ const Header = () => {
       <>
         <Link to="/create-league" className="btn btn-green">Create League</Link>
         <Link to="/join-league" className="btn btn-blue">Join League</Link>
+        <Link to="/my-rosters" className="btn btn-purple">My Rosters</Link>
 
         <span className="user-email">{user.email}</span>
         <button onClick={handleLogout} className="btn btn-red">Logout</button>

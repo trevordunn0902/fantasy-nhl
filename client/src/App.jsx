@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound.jsx";
 import CreateLeague from "./pages/CreateLeague";
 import JoinLeague from "./pages/JoinLeague";
 import ViewRoster from "./pages/ViewRoster";
+import MyRosters from "./pages/MyRosters";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/league/:leagueId/team/:teamId" element={<ViewRoster />} />
+          <Route path="/my-rosters" element={<MyRosters />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/create-league" element={<CreateLeague />} />
           <Route path="/join-league" element={<JoinLeague />} />

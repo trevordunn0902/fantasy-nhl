@@ -1,6 +1,8 @@
 package com.fantasynhl.server.league;
 
 import org.springframework.stereotype.Service;
+import com.fantasynhl.server.league.dto.TeamDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -11,17 +13,20 @@ public class DraftService {
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
     private final DraftPickRepository draftPickRepository;
+    private final TeamPlayerRepository teamPlayerRepository;
 
     public DraftService(
             LeagueRepository leagueRepository,
             TeamRepository teamRepository,
             PlayerRepository playerRepository,
-            DraftPickRepository draftPickRepository
+            DraftPickRepository draftPickRepository,
+            TeamPlayerRepository teamPlayerRepository
     ) {
         this.leagueRepository = leagueRepository;
         this.teamRepository = teamRepository;
         this.playerRepository = playerRepository;
         this.draftPickRepository = draftPickRepository;
+        this.teamPlayerRepository = teamPlayerRepository;
     }
 
     // Start the draft for a league
@@ -36,15 +41,12 @@ public class DraftService {
         }
 
         List<Team> teams = new ArrayList<>(league.getTeams());
-        if (teams.isEmpty()) {
-            throw new RuntimeException("Cannot start draft with no teams");
-        }
+        if (teams.isEmpty()) throw new RuntimeException("Cannot start draft with no teams");
 
         Collections.shuffle(teams);
         league.setDraftOrder(teams);
         league.setDraftStarted(true);
 
-        // Persist draft order IDs
         String ids = teams.stream()
                 .map(t -> t.getId().toString())
                 .collect(Collectors.joining(","));
@@ -58,33 +60,23 @@ public class DraftService {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new RuntimeException("League not found"));
 
-        if (!league.isDraftStarted()) {
-            throw new RuntimeException("Draft has not started");
-        }
+        if (!league.isDraftStarted()) throw new RuntimeException("Draft has not started");
 
-        // Rebuild draftOrder from IDs if needed
         league.reconstructDraftOrder();
-        if (league.getDraftOrder() == null || league.getDraftOrder().isEmpty()) {
+        if (league.getDraftOrder() == null || league.getDraftOrder().isEmpty())
             throw new RuntimeException("Draft order is empty, cannot pick");
-        }
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
-
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new RuntimeException("Player not found"));
 
-        // Check if it's the team's turn
         Team currentTeam = league.getDraftOrder().get(league.getCurrentTurnIndex());
-        if (!currentTeam.getId().equals(teamId)) {
-            throw new RuntimeException("Not your turn to pick");
-        }
+        if (!currentTeam.getId().equals(teamId)) throw new RuntimeException("Not your turn to pick");
 
         // Check if player is already drafted in the league
-        boolean drafted = draftPickRepository.existsByLeagueAndPlayer(league, player);
-        if (drafted) {
+        if (draftPickRepository.existsByLeagueAndPlayer(league, player))
             throw new RuntimeException("Player already drafted in this league");
-        }
 
         // Enforce positional limits per team
         Map<String, Long> positionCount = draftPickRepository.findByLeagueAndTeam(league, team)
@@ -95,34 +87,13 @@ public class DraftService {
                         HashMap::putAll
                 );
 
-        switch (player.getPosition()) {
-            case "G":
-                if (positionCount.getOrDefault("G", 0L) >= 2) {
-                    throw new RuntimeException("Cannot draft more than 2 goalies");
-                }
-                break;
-            case "D":
-                if (positionCount.getOrDefault("D", 0L) >= 6) {
-                    throw new RuntimeException("Cannot draft more than 6 defensemen");
-                }
-                break;
-            case "C":
-                if (positionCount.getOrDefault("C", 0L) >= 4) {
-                    throw new RuntimeException("Cannot draft more than 4 centers");
-                }
-                break;
-            case "LW":
-                if (positionCount.getOrDefault("LW", 0L) >= 4) {
-                    throw new RuntimeException("Cannot draft more than 4 left wings");
-                }
-                break;
-            case "RW":
-                if (positionCount.getOrDefault("RW", 0L) >= 4) {
-                    throw new RuntimeException("Cannot draft more than 4 right wings");
-                }
-                break;
-            default:
-                throw new RuntimeException("Unknown player position: " + player.getPosition());
+        switch (player.getPositionCode()) {
+            case "G" -> { if (positionCount.getOrDefault("G", 0L) >= 2) throw new RuntimeException("Cannot draft more than 2 goalies"); }
+            case "D" -> { if (positionCount.getOrDefault("D", 0L) >= 6) throw new RuntimeException("Cannot draft more than 6 defensemen"); }
+            case "C" -> { if (positionCount.getOrDefault("C", 0L) >= 4) throw new RuntimeException("Cannot draft more than 4 centers"); }
+            case "L" -> { if (positionCount.getOrDefault("L", 0L) >= 4) throw new RuntimeException("Cannot draft more than 4 left wings"); }
+            case "R" -> { if (positionCount.getOrDefault("R", 0L) >= 4) throw new RuntimeException("Cannot draft more than 4 right wings"); }
+            default -> throw new RuntimeException("Unknown player position: " + player.getPositionCode());
         }
 
         // Create DraftPick
@@ -130,13 +101,21 @@ public class DraftService {
         pick.setLeague(league);
         pick.setTeam(team);
         pick.setPlayer(player);
-        pick.setPosition(player.getPosition());
+        pick.setPosition(player.getPositionCode());
         pick.setPickOrder(league.getCurrentTurnIndex() + 1);
         draftPickRepository.save(pick);
 
-        // Add player to team's roster
-        team.getRoster().add(player);
-        teamRepository.save(team);
+        // Add player to team_players (TeamPlayer)
+        TeamPlayer tp = new TeamPlayer();
+        TeamPlayerId id = new TeamPlayerId();
+        id.setTeamId(team.getId());
+        id.setPlayerId(player.getId());
+        tp.setId(id);
+        tp.setTeam(team);
+        tp.setPlayer(player);
+        tp.setCaptainRole("NONE");
+
+        teamPlayerRepository.save(tp);
 
         // Move to next turn
         league.setCurrentTurnIndex((league.getCurrentTurnIndex() + 1) % league.getTeams().size());
@@ -146,7 +125,6 @@ public class DraftService {
                 .map(t -> t.getId().toString())
                 .collect(Collectors.joining(","));
         league.setDraftOrderIds(ids);
-
         leagueRepository.save(league);
 
         return pick;
@@ -183,15 +161,19 @@ public class DraftService {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new RuntimeException("League not found"));
 
-        // Rebuild draftOrder from IDs if null/empty
         league.reconstructDraftOrder();
 
         Map<String, Object> status = new HashMap<>();
         status.put("draftStarted", league.isDraftStarted());
+
         if (league.isDraftStarted() && !league.getDraftOrder().isEmpty()) {
-            status.put("currentTeam", league.getDraftOrder().get(league.getCurrentTurnIndex()).getName());
+            status.put("currentTeamId", league.getDraftOrder().get(league.getCurrentTurnIndex()).getId());
         }
-        status.put("teams", league.getTeams());
+
+        List<TeamDTO> teamDTOs = league.getTeams().stream()
+                .map(TeamDTO::new)
+                .collect(Collectors.toList());
+        status.put("teams", teamDTOs);
 
         return status;
     }

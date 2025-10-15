@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Base URL for your backend
 const API = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: "http://fantasynhl-backend.us-east-2.elasticbeanstalk.com/api",
   withCredentials: true, // if your backend uses cookies for auth
 });
 
@@ -11,7 +11,7 @@ const API = axios.create({
 export const registerUser = async (email, password) => {
   try {
     const response = await API.post("/auth/register", null, {
-      params: { email, password }, // send as query parameters
+      params: { email, password },
     });
     return response.data;
   } catch (err) {
@@ -22,7 +22,7 @@ export const registerUser = async (email, password) => {
 export const loginUser = async (email, password) => {
   try {
     const response = await API.post("/auth/login", null, {
-      params: { email, password }, // send as query parameters
+      params: { email, password },
     });
     return response.data;
   } catch (err) {
@@ -33,10 +33,8 @@ export const loginUser = async (email, password) => {
 // --- League Management ---
 export const createLeague = async (name) => {
   try {
-    const response = await API.post("/league/create", null, {
-      params: { name }, // query param for backend
-    });
-    return response.data; // LeagueDTO
+    const response = await API.post("/league/create", null, { params: { name } });
+    return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to create league" };
   }
@@ -45,9 +43,9 @@ export const createLeague = async (name) => {
 export const joinLeague = async (inviteCode, teamName, userId) => {
   try {
     const response = await API.post("/league/join", null, {
-      params: { inviteCode, teamName, userId }, // query params for backend
+      params: { inviteCode, teamName, userId },
     });
-    return response.data; // TeamDTO
+    return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to join league" };
   }
@@ -56,7 +54,7 @@ export const joinLeague = async (inviteCode, teamName, userId) => {
 export const getLeagueByInviteCode = async (inviteCode) => {
   try {
     const response = await API.get("/league", { params: { inviteCode } });
-    return response.data; // LeagueDTO
+    return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to fetch league" };
   }
@@ -65,7 +63,7 @@ export const getLeagueByInviteCode = async (inviteCode) => {
 export const getAllLeagues = async () => {
   try {
     const response = await API.get("/league/all");
-    return response.data; // array of LeagueDTO
+    return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to fetch all leagues" };
   }
@@ -75,7 +73,7 @@ export const getAllLeagues = async () => {
 export const startDraft = async (leagueId) => {
   try {
     const response = await API.post("/draft/start", null, { params: { leagueId } });
-    return response.data; // will be "Draft started" string
+    return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to start draft" };
   }
@@ -84,7 +82,7 @@ export const startDraft = async (leagueId) => {
 export const getAvailablePlayers = async (leagueId) => {
   try {
     const response = await API.get("/draft/available", { params: { leagueId } });
-    return response.data; // array of DraftPickDTO
+    return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to get available players" };
   }
@@ -92,21 +90,19 @@ export const getAvailablePlayers = async (leagueId) => {
 
 export const draftPlayer = async (leagueId, teamId, playerId) => {
   try {
-    const response = await API.post(
-      "/draft/pick",
-      null,
-      { params: { leagueId, teamId, playerId } }
-    );
-    return response.data; // DraftPickDTO for the drafted player
+    const response = await API.post("/draft/pick", null, { params: { leagueId, teamId, playerId } });
+    return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to draft player" };
   }
 };
 
+// --- DRAFT-SPECIFIC TEAM ROSTER ---
+// Used **only during the draft** to get a team's roster in the context of the draft
 export const getTeamRoster = async (leagueId, teamId) => {
   try {
     const response = await API.get("/draft/team", { params: { leagueId, teamId } });
-    return response.data; // array of DraftPickDTO for the team
+    return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to get team roster" };
   }
@@ -115,7 +111,7 @@ export const getTeamRoster = async (leagueId, teamId) => {
 export const getDraftStatus = async (leagueId) => {
   try {
     const response = await API.get("/draft/status", { params: { leagueId } });
-    return response.data; // draft status object
+    return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to get draft status" };
   }
@@ -124,13 +120,32 @@ export const getDraftStatus = async (leagueId) => {
 // --- Player Management ---
 export const assignPlayerRole = async (teamId, playerId, role) => {
   try {
-    const response = await API.post(
-      `/team-players/${teamId}/${playerId}/assign-captain`,
-      null,
-      { params: { role } } // role must match backend value exactly ("CAPTAIN")
-    );
+    const response = await API.post(`/team-players/${teamId}/${playerId}/assign-captain`, null, {
+      params: { role },
+    });
     return response.data;
   } catch (err) {
     throw err.response?.data || { message: "Failed to assign player role" };
+  }
+};
+
+// --- TEAM API ---
+// Get all teams associated with a user
+export const getUserTeams = async (ownerId) => {
+  try {
+    const response = await API.get("/team/my-teams", { params: { ownerId } });
+    return response.data; // array of TeamDTO
+  } catch (err) {
+    throw err.response?.data || { message: "Failed to get user's teams" };
+  }
+};
+
+// Get a single team by its ID (for ViewRoster and MyRosters pages)
+export const getTeamById = async (teamId) => {
+  try {
+    const response = await API.get(`/team/${teamId}`);
+    return response.data; // single TeamDTO
+  } catch (err) {
+    throw err.response?.data || { message: "Failed to get team by ID" };
   }
 };

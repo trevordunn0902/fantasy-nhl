@@ -1,9 +1,9 @@
 package com.fantasynhl.server.league;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.List;
 
-@Repository
 public interface PlayerRepository extends JpaRepository<Player, Long> {
-    // No extra methods for now; basic CRUD is sufficient for v2
+    List<Player> findByNhlTeamIgnoreCase(String nhlTeam);
+    List<Player> findByPositionIgnoreCase(String position);
 }

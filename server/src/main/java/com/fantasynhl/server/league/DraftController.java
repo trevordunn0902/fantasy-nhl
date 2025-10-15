@@ -39,9 +39,12 @@ public class DraftController {
                             p.getId(),
                             p.getName(),
                             p.getPosition(),
+                            p.getPositionCode(),
                             null,
                             null,
-                            0))
+                            0,
+                            p.getPoints()
+                            ))
                     .collect(Collectors.toList());
             return ResponseEntity.ok(playerDTOs);
         } catch (RuntimeException e) {
@@ -62,9 +65,10 @@ public class DraftController {
                     pick.getPlayer().getId(),
                     pick.getPlayer().getName(),
                     pick.getPlayer().getPosition(),
+                    pick.getPlayer().getPositionCode(),
                     pick.getTeam().getId(),
                     pick.getTeam().getName(),
-                    pick.getPickOrder()
+                    pick.getPickOrder(), pick.getPlayer().getPoints()
             );
             return ResponseEntity.ok(dto);
         } catch (RuntimeException e) {
@@ -85,9 +89,10 @@ public class DraftController {
                             p.getPlayer().getId(),
                             p.getPlayer().getName(),
                             p.getPlayer().getPosition(),
+                            p.getPlayer().getPositionCode(),
                             p.getTeam().getId(),
                             p.getTeam().getName(),
-                            p.getPickOrder()))
+                            p.getPickOrder(), p.getPlayer().getPoints()))
                     .collect(Collectors.toList());
             return ResponseEntity.ok(rosterDTOs);
         } catch (RuntimeException e) {
