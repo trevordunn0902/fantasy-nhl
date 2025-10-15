@@ -1,9 +1,0 @@
-.league-details-container {
-  padding: 20px;
-}
-
-.team-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
