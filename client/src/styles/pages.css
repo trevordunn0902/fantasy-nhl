@@ -114,6 +114,30 @@
   gap: 1rem;
 }
 
+/* Sticky current turn */
+.current-turn {
+  position: sticky;
+  top: 0; /* sticks to top of draft board container */
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  background-color: #1e1e2f; /* keep same as page bg for now */
+  display: inline-block;
+  margin-bottom: 0.75rem;
+}
+
+/* Bubble outline highlight */
+.turn-highlight {
+  border: 2px solid #ffcc00; /* bright, noticeable color */
+  color: #fff;
+  font-weight: 600;
+}
+
+.your-turn-text {
+  color: #00ff99; /* optional: green for "Your Turn!" */
+  font-weight: 700;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .draft-filters {
@@ -121,6 +145,16 @@
   }
 }
 
+@keyframes fade-in-out {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.animate-fade-in-out {
+  animation: fade-in-out 5s ease forwards;
+}
 
 /* === Player Card === */
 .player-card {

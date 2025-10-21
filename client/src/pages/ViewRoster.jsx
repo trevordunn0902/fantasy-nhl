@@ -14,13 +14,11 @@ const ViewRoster = () => {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState({});
 
-  // Count current roles for validation
   const roleCounts = {
     CAPTAIN: Object.values(roles).filter((r) => r === "CAPTAIN").length,
     ASSISTANT: Object.values(roles).filter((r) => r === "ASSISTANT").length,
   };
 
-  // Determine current captain and assistants based on roles state
   const captainPlayer = players.find((p) => roles[p.id] === "CAPTAIN");
   const assistantPlayers = players.filter((p) => roles[p.id] === "ASSISTANT");
 
@@ -33,10 +31,8 @@ const ViewRoster = () => {
         setTeamTotalPoints(team?.totalPoints || 0);
         setLeagueId(team?.league?.id || null);
 
-        // Initialize roles directly from backend-provided role
         const initialRoles = {};
         (team?.roster || []).forEach((p) => {
-          // Use backend role as-is
           initialRoles[p.id] = p.role || "NONE";
         });
         setRoles(initialRoles);
@@ -50,7 +46,6 @@ const ViewRoster = () => {
   }, [teamId]);
 
   const handleRoleChange = async (playerId, newRole) => {
-    // Validate limits
     if (newRole === "CAPTAIN" && roleCounts.CAPTAIN >= 1 && roles[playerId] !== "CAPTAIN") {
       alert("Only 1 Captain allowed.");
       return;
@@ -75,12 +70,7 @@ const ViewRoster = () => {
     <div className="page-container p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="page-title">{teamName ? `${teamName} Roster` : "Team Roster"}</h1>
-        <Link
-          to={leagueId ? `/draft/${leagueId}` : `/draft`}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-        >
-          Back to Draft
-        </Link>
+        <Link to={leagueId ? `/draft/${leagueId}` : `/draft`} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Back to Draft</Link>
       </div>
 
       <div className="mb-6 p-4 bg-gray-100 rounded shadow-sm">
@@ -89,29 +79,23 @@ const ViewRoster = () => {
         <p><strong>Captain:</strong> {captainPlayer ? captainPlayer.name : "None"}</p>
         <p>
           <strong>Assistants:</strong>{" "}
-          {assistantPlayers.length ? (
-            assistantPlayers.map((p, idx) => (
-              <span key={p.id}>
-                {p.name}{idx < assistantPlayers.length - 1 ? ", " : ""}
-              </span>
-            ))
-          ) : (
-            "None"
-          )}
+          {assistantPlayers.length ? assistantPlayers.map((p, idx) => (
+            <span key={p.id}>{p.name}{idx < assistantPlayers.length - 1 ? ", " : ""}</span>
+          )) : "None"}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {players.length ? (
           players.map((player) => (
-            <PlayerCard key={player.id} player={player}>
+            <PlayerCard key={player.id} player={player} showPoints={true}>
+              <div className="card-children text-sm text-gray-600 mb-2">
+                {player.positionCode && <span>Position: {player.positionCode}</span>}
+                {player.nhlTeam && <span> | Team: {player.nhlTeam}</span>}
+              </div>
               <div className="card-children">
                 <label className="block text-sm font-semibold mb-1 mt-2">Role:</label>
-                <select
-                  value={roles[player.id] || "NONE"}
-                  onChange={(e) => handleRoleChange(player.id, e.target.value)}
-                  className="border rounded p-1 w-full"
-                >
+                <select value={roles[player.id] || "NONE"} onChange={(e) => handleRoleChange(player.id, e.target.value)} className="border rounded p-1 w-full">
                   <option value="NONE">None</option>
                   <option value="CAPTAIN">Captain</option>
                   <option value="ASSISTANT">Assistant</option>

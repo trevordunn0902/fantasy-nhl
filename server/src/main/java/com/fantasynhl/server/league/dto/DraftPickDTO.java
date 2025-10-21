@@ -4,15 +4,17 @@ public class DraftPickDTO {
     private Long playerId;
     private String playerName;
     private String position;
-    private String positionCode; // NEW FIELD
+    private String positionCode;
     private Long teamId;
     private String teamName;
     private int pickOrder;
     private int points;
+    private String nhlTeam; // NEW FIELD
 
     public DraftPickDTO() {}
 
-    public DraftPickDTO(Long playerId, String playerName, String position, String positionCode, Long teamId, String teamName, int pickOrder, int points) {
+    public DraftPickDTO(Long playerId, String playerName, String position, String positionCode,
+                        Long teamId, String teamName, int pickOrder, int points, String nhlTeam) {
         this.playerId = playerId;
         this.playerName = playerName;
         this.position = position;
@@ -21,6 +23,7 @@ public class DraftPickDTO {
         this.teamName = teamName;
         this.pickOrder = pickOrder;
         this.points = points;
+        this.nhlTeam = nhlTeam;
     }
 
     // Getters / setters
@@ -47,4 +50,7 @@ public class DraftPickDTO {
 
     public int getPoints() { return points; }
     public void setPoints(int points) { this.points = points; }
+
+    public String getNhlTeam() { return nhlTeam; }
+    public void setNhlTeam(String nhlTeam) { this.nhlTeam = nhlTeam; }
 }

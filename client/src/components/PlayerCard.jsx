@@ -1,8 +1,7 @@
-// src/components/PlayerCard.jsx
 import React from "react";
 import "../styles/pages.css";
 
-const PlayerCard = ({ player, drafted, isMyTeam, children }) => {
+const PlayerCard = ({ player, drafted, isMyTeam, children, showPoints = true }) => {
   return (
     <div
       className={`player-card 
@@ -10,22 +9,15 @@ const PlayerCard = ({ player, drafted, isMyTeam, children }) => {
         ${isMyTeam && drafted ? "my-team" : ""}`}
     >
       {/* Name */}
-      <h4>{player.name || player.playerName}</h4>
+      <h4>{player.playerName || player.name}</h4>
 
-      {/* Position */}
-      {player.positionCode && <p><strong>Position:</strong> {player.positionCode}</p>}
-
-      {/* NHL Team */}
-      {player.nhlTeam && <p><strong>NHL Team:</strong> {player.nhlTeam}</p>}
+      {/* Optional children (like position/NHL team or buttons) */}
+      {children && <div className="card-children">{children}</div>}
 
       {/* Points */}
-      {player.points !== undefined && <p><strong>Points:</strong> {player.points}</p>}
-
-      {/* Team Name */}
-      {player.teamName && <p><strong>Team:</strong> {player.teamName}</p>}
-
-      {/* Optional children (like role selector) */}
-      {children && <div className="card-children">{children}</div>}
+      {showPoints && player.points !== undefined && (
+        <p><strong>Points:</strong> {player.points}</p>
+      )}
     </div>
   );
 };

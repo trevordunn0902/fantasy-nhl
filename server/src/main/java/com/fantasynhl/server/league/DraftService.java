@@ -3,6 +3,8 @@ package com.fantasynhl.server.league;
 import org.springframework.stereotype.Service;
 import com.fantasynhl.server.league.dto.TeamDTO;
 
+import jakarta.transaction.Transactional;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,14 +32,14 @@ public class DraftService {
     }
 
     // Start the draft for a league
+    @Transactional
     public void startDraft(Long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new RuntimeException("League not found"));
 
-        // Reset draft if already started
+        // If already started — don't reset. Block the operation.
         if (league.isDraftStarted()) {
-            draftPickRepository.deleteAll(draftPickRepository.findByLeague(league));
-            league.setCurrentTurnIndex(0);
+            throw new RuntimeException("Draft has already started for this league.");
         }
 
         List<Team> teams = new ArrayList<>(league.getTeams());
@@ -45,6 +47,7 @@ public class DraftService {
 
         Collections.shuffle(teams);
         league.setDraftOrder(teams);
+        league.setCurrentTurnIndex(0);
         league.setDraftStarted(true);
 
         String ids = teams.stream()
@@ -164,10 +167,12 @@ public class DraftService {
         league.reconstructDraftOrder();
 
         Map<String, Object> status = new HashMap<>();
-        status.put("draftStarted", league.isDraftStarted());
+        // Use 'started' key to match frontend expectations
+        status.put("started", league.isDraftStarted());
 
-        if (league.isDraftStarted() && !league.getDraftOrder().isEmpty()) {
+        if (league.isDraftStarted() && league.getDraftOrder() != null && !league.getDraftOrder().isEmpty()) {
             status.put("currentTeamId", league.getDraftOrder().get(league.getCurrentTurnIndex()).getId());
+            status.put("currentTurnIndex", league.getCurrentTurnIndex());
         }
 
         List<TeamDTO> teamDTOs = league.getTeams().stream()

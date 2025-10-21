@@ -18,7 +18,6 @@ public class DraftController {
         this.draftService = draftService;
     }
 
-    // Start draft
     @PostMapping("/start")
     public ResponseEntity<String> startDraft(@RequestParam Long leagueId) {
         try {
@@ -29,7 +28,6 @@ public class DraftController {
         }
     }
 
-    // Get available players for a league (not yet drafted in this league)
     @GetMapping("/available")
     public ResponseEntity<List<DraftPickDTO>> getAvailablePlayers(@RequestParam Long leagueId) {
         try {
@@ -43,8 +41,9 @@ public class DraftController {
                             null,
                             null,
                             0,
-                            p.getPoints()
-                            ))
+                            p.getPoints(),
+                            p.getNhlTeam() // <-- include NHL team
+                    ))
                     .collect(Collectors.toList());
             return ResponseEntity.ok(playerDTOs);
         } catch (RuntimeException e) {
@@ -52,7 +51,6 @@ public class DraftController {
         }
     }
 
-    // Draft a player
     @PostMapping("/pick")
     public ResponseEntity<?> draftPlayer(
             @RequestParam Long leagueId,
@@ -68,7 +66,9 @@ public class DraftController {
                     pick.getPlayer().getPositionCode(),
                     pick.getTeam().getId(),
                     pick.getTeam().getName(),
-                    pick.getPickOrder(), pick.getPlayer().getPoints()
+                    pick.getPickOrder(),
+                    pick.getPlayer().getPoints(),
+                    pick.getPlayer().getNhlTeam() // <-- include NHL team
             );
             return ResponseEntity.ok(dto);
         } catch (RuntimeException e) {
@@ -76,7 +76,6 @@ public class DraftController {
         }
     }
 
-    // Get team roster for a league
     @GetMapping("/team")
     public ResponseEntity<?> getTeamRoster(
             @RequestParam Long leagueId,
@@ -92,7 +91,10 @@ public class DraftController {
                             p.getPlayer().getPositionCode(),
                             p.getTeam().getId(),
                             p.getTeam().getName(),
-                            p.getPickOrder(), p.getPlayer().getPoints()))
+                            p.getPickOrder(),
+                            p.getPlayer().getPoints(),
+                            p.getPlayer().getNhlTeam() // <-- include NHL team
+                    ))
                     .collect(Collectors.toList());
             return ResponseEntity.ok(rosterDTOs);
         } catch (RuntimeException e) {
@@ -100,7 +102,6 @@ public class DraftController {
         }
     }
 
-    // Get league draft status
     @GetMapping("/status")
     public ResponseEntity<?> getLeagueDraftStatus(@RequestParam Long leagueId) {
         try {

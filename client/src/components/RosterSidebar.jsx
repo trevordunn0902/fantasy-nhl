@@ -20,7 +20,7 @@ const RosterSidebar = ({ teamId }) => {
 
     fetchRoster();
 
-    const interval = setInterval(fetchRoster, 10000);
+    const interval = setInterval(fetchRoster, 3000);
     return () => clearInterval(interval);
   }, [teamId]);
 
